@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Clan Wars Stats</title>
+<style>
+  :root {
+    --bg:        #0e0e0e;
+    --bg2:       #161616;
+    --bg3:       #1e1e1e;
+    --border:    #2a2a2a;
+    --border2:   #383838;
+    --text:      #e0e0e0;
+    --text2:     #888888;
+    --text3:     #444444;
+    --accent:    #aaaaaa;
+    --accent2:   #666666;
+    --gold:      #e0af68;
+    --silver:    #d8d8d8;
+    --bronze:    #c9a05a;
+    --highlight: rgba(200,200,200,0.08);
+    --highlight-border: rgba(200,200,200,0.2);
+    --row-hover: rgba(255,255,255,0.04);
+    --radius:    6px;
+    --font:      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 60px;
+    position: static;
+  }
+
+  .logo {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .logo span {
+    color: var(--text2);
+    font-weight: 400;
+    font-size: 14px;
+    margin-left: 6px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  .stat-pill {
+    font-size: 12px;
+    color: var(--text2);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .stat-pill strong { color: var(--text); font-weight: 600; }
+
+  .season-select {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 30px 6px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c87a6' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color 0.15s;
+  }
+  .season-select:hover, .season-select:focus { border-color: var(--accent2); }
+
+  /* MAIN */
+  main {
+    padding: 1.5rem;
+    padding-top: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .table-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .table-title {
+    font-size: 13px;
+    color: var(--text2);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .sort-indicator {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--font);
+  }
+  .sort-indicator span { color: var(--accent); }
+
+  .reset-btn {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .reset-btn:hover { border-color: var(--accent2); color: var(--accent); }
+
+  /* TABLE */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg2);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    font-family: var(--font);
+  }
+
+  thead {
+    background: var(--bg3);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  /* Group row — category names */
+  .group-row th {
+    padding: 8px 12px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text3);
+    border-bottom: none;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .group-row th.group-label {
+    color: var(--text2);
+    border-left: 1px solid var(--border);
+  }
+  .group-row th.bm-group {
+    color: var(--text2);
+  }
+
+  /* Col row — sub-headers */
+  .col-row th {
+    padding: 6px 12px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s, background 0.15s;
+    text-align: left;
+  }
+  .col-row th:hover { color: var(--accent); background: rgba(200,200,200,0.04); }
+  .col-row th.sorted { color: var(--accent); }
+  .col-row th .sort-arrow {
+    display: inline-block;
+    margin-left: 4px;
+    opacity: 0.3;
+    font-size: 10px;
+    transition: opacity 0.15s;
+  }
+  .col-row th:hover .sort-arrow,
+  .col-row th.sorted .sort-arrow { opacity: 1; }
+  .col-row th.cat-border { border-left: 1px solid var(--border); }
+
+  /* TBODY */
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--row-hover); }
+  tbody tr.selected {
+    background: var(--highlight);
+    outline: 1px solid var(--highlight-border);
+    outline-offset: -1px;
+  }
+  tbody tr.placeholder { opacity: 0.3; }
+
+  td {
+    padding: 9px 12px;
+    font-family: var(--font);
+    font-size: 14px;
+    color: var(--text);
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  td.cat-border { border-left: 1px solid var(--border); }
+  td.rank-col {
+    font-weight: 600;
+    color: var(--text2);
+    width: 44px;
+    text-align: center;
+  }
+  td.player-col {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 130px;
+  }
+  td.bm-col {
+    font-weight: 500;
+    color: var(--text);
+    text-align: right;
+  }
+  td.cat-rank-col {
+    text-align: center;
+    color: var(--text2);
+    width: 44px;
+  }
+  td.score-col {
+    text-align: right;
+    color: var(--text);
+  }
+
+  /* Medal colours */
+  .gold-text   { color: var(--gold)   !important; font-weight: 700; }
+  .silver-text { color: var(--silver) !important; font-weight: 700; }
+  .bronze-text { color: var(--bronze) !important; font-weight: 700; }
+
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 20px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .rank-1 { background: rgba(224,175,104,0.15); color: var(--gold); }
+  .rank-2 { background: rgba(216,216,216,0.15); color: var(--silver); }
+  .rank-3 { background: rgba(201,160,90,0.12);  color: var(--bronze); }
+
+  .empty { color: var(--text3); }
+
+  footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text3);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 700px) {
+    header { padding: 0 1rem; height: auto; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; }
+    .stats-bar { display: none; }
+    main { padding: 1rem 0.75rem; }
+    thead { top: 0; }
+    td, .col-row th { padding: 7px 8px; font-size: 12px; }
+    td.player-col { font-size: 13px; min-width: 100px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Clan Wars <span>Member Performance</span></div>
+  <div class="header-right">
+    <div class="stats-bar">
+      <div class="stat-pill">Players <strong id="player-count">—</strong></div>
+    </div>
+    <select class="season-select" id="season-select" onchange="loadSeason(this.value)">
+      <option value="25">Season 25</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <div class="table-meta">
+    <div class="table-title">Ranked by Battle Medals</div>
+    <div style="display:flex;gap:0.75rem;align-items:center;">
+      <div class="sort-indicator" id="sort-label"></div>
+      <button class="reset-btn" onclick="resetSort()">Reset Sort</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="leaderboard">
+      <thead>
+        <tr class="group-row">
+          <th></th>
+          <th class="bm-group" colspan="2">Battle Medals</th>
+          <th class="group-label" colspan="2">Player Defeats</th>
+          <th class="group-label" colspan="2">Monster Defeats</th>
+          <th class="group-label" colspan="2">Boss Participation</th>
+          <th class="group-label" colspan="2">Morale Use</th>
+          <th class="group-label" colspan="2">Red Energy</th>
+        </tr>
+        <tr class="col-row">
+          <th onclick="sortTable(1,'str')">Player <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(0,'num')">Rank <span class="sort-arrow">↑</span></th>
+          <th onclick="sortTable(2,'score')">Score <span class="sort-arrow">↕</span></th>
+          <th class="cat-border" onclick="sortTable(4,'num')">Rank <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(3,'num')">Score <span class="sort-arrow">↕</span></th>
+          <th class="cat-border" onclick="sortTable(6,'num')">Rank <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(5,'num')">Score <span class="sort-arrow">↕</span></th>
+          <th class="cat-border" onclick="sortTable(8,'num')">Rank <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(7,'num')">Score <span class="sort-arrow">↕</span></th>
+          <th class="cat-border" onclick="sortTable(10,'num')">Rank <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(9,'score')">Score <span class="sort-arrow">↕</span></th>
+          <th class="cat-border" onclick="sortTable(12,'num')">Rank <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable(11,'num')">Score <span class="sort-arrow">↕</span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</main>
+
+<footer>Clan Wars Stats · Season data updated manually · Built for the clan</footer>
+
+<script>
+const seasons = {
+  25: [
+    // [BM_rank, player, BM_score, PD_score, PD_rank, MD_score, MD_rank, BP_score, BP_rank, MOR_score, MOR_rank, RE_score, RE_rank]
+    [1,  "SpaceBobs",      "117.2k", 183,  5,  472, 4,  124, 3,  "49.24k", 6,  2916, 2 ],
+    [2,  "YaoRen",         "117k",   277,  2,  521, 2,  118, 6,  "58.26k", 2,  3000, 1 ],
+    [3,  "C L U T C H",   "116.3k", 488,  1,  403, 5,  94,  17, "67.17k", 1,  2535, 4 ],
+    [4,  "Mr Hankey",      "98.96k", 197,  4,  205, 33, 97,  15, "43.88k", 9,  1821, 21],
+    [5,  "GAMALI€L",       "94.20k", 239,  3,  349, 9,  127, 2,  "51.71k", 5,  2505, 5 ],
+    [6,  "Kürbistumor",    "74.72k", 146,  7,  265, 25, 115, 9,  "52.85k", 3,  2133, 10],
+    [7,  "Lipy",           "74.27k", 76,   16, 211, 32, 150, 1,  "39.74k", 14, 1896, 19],
+    [8,  "Kaleb",          "73.77k", 111,  10, 307, 17, 108, 13, "43.45k", 10, 2409, 6 ],
+    [9,  "VAPOR",          "73.30k", 85,   14, 277, 24, 120, 5,  "39.28k", 15, 2181, 9 ],
+    [10, "Altamimi",       "72.53k", 78,   15, 321, 15, 115, 8,  "38.52k", 16, 1980, 14],
+    [11, "EatDirt",        "71.95k", 42,   25, 324, 14, 73,  24, "31.95k", 25, 1758, 24],
+    [12, "Monkey9",        "71.10k", 100,  12, 327, 13, 78,  21, "42.36k", 11, 1977, 15],
+    [13, "irishspicebag",  "69.56k", 59,   20, 131, 41, 110, 12, "36.25k", 18, 1482, 32],
+    [14, "inactive",       "68.95k", 89,   13, 295, 20, 76,  23, "38.44k", 17, 1785, 23],
+    [15, "4SAKEN",         "63.39k", 106,  11, 292, 21, 124, 4,  "40.72k", 13, 2091, 12],
+    [16, "NinjaBread",     "63.26k", 140,  8,  352, 8,  100, 14, "42.22k", 12, 2106, 11],
+    [17, "DegenKaleb",     "63.24k", 55,   23, 149, 40, 112, 11, "36.04k", 19, 1887, 20],
+    [18, "HaLOBuSter",     "59.43k", 147,  6,  510, 3,  95,  16, "51.76k", 4,  2913, 3 ],
+    [19, "Sunnik",         "56.78k", 3,    43, 264, 26, 118, 7,  "32.23k", 24, 2043, 13],
+    [20, "Kiwifruit",      "55.82k", 67,   18, 348, 10, 84,  18, "47.15k", 7,  2358, 7 ],
+    [21, "FuHQ",           "55.26k", 39,   26, 243, 29, 81,  19, "29.33k", 28, 1542, 31],
+    [22, "SCReeaM",        "39.33k", 20,   33, 243, 28, 79,  20, "34.45k", 21, 1683, 26],
+    [23, "ALVIH",          "36.80k", 29,   30, 193, 35, 64,  26, "33.81k", 22, 1587, 29],
+    [24, "Croiis",         "34.57k", 56,   21, 222, 30, 64,  25, "27.96k", 32, 1665, 27],
+    [25, "Lady Butters",   "30.18k", 13,   38, 252, 27, 60,  28, "24.03k", 37, 1470, 33],
+    [26, "Xtro",           "29.66k", 71,   17, 196, 34, 22,  37, "18.53k", 40, 1053, 39],
+    [27, "GARGIULO",       "27.35k", 21,   32, 391, 6,  31,  34, "26.26k", 35, 1788, 22],
+    [28, "Udo88",          "27.11k", 20,   34, 304, 18, 28,  35, "19.82k", 39, 1365, 37],
+    [29, "Doc H",          "26.57k", 35,   27, 311, 16, 45,  30, "28.31k", 31, 1572, 30],
+    [30, "Gandalf",        "24.93k", 29,   29, 299, 19, 31,  33, "32.45k", 23, 1908, 17],
+    [31, "Vycente",        "24.04k", 18,   35, 331, 12, 112, 10, "27.83k", 33, 1902, 18],
+    [32, "AK Nomad",       "21.86k", 56,   22, 279, 23, 62,  27, "44.06k", 8,  2205, 8 ],
+    [33, "KillerMedic",    "20.35k", 15,   37, 188, 36, 44,  31, "28.74k", 29, 1467, 34],
+    [34, "AHJIN",          "17.97k", 6,    41, 85,  43, 50,  29, "15.48k", 43, 714,  43],
+    [35, "Mr Boss",        "17.29k", 1,    46, 217, 31, 76,  22, "27.21k", 34, 1614, 28],
+    [36, "ghengist",       "16.15k", 60,   19, 163, 39, 12,  43, "31.86k", 26, 1128, 38],
+    [37, "Dante",          "15.13k", 26,   31, 375, 7,  14,  41, "29.43k", 27, 1446, 35],
+    [38, "Hunikel",        "14.74k", 7,    40, 46,  47, 41,  32, "11.59k", 46, 486,  46],
+    [39, "xTracdx",        "14.67k", 134,  9,  166, 38, 0,   49, "28.52k", 30, 849,  40],
+    [40, "Rico el Dino",   "11.68k", 48,   24, 280, 22, 17,  39, "22.43k", 38, 1380, 36],
+    [41, "FISTED",         "11.61k", 6,    42, 341, 11, 22,  38, "35.73k", 20, 1737, 25],
+    [42, "AvatarSun",      "10.43k", 29,   28, 588, 1,  0,   47, "24.20k", 36, 1920, 16],
+    [43, "Mysturray",      "7545",   0,    49, 168, 37, 16,  40, "13.90k", 44, 783,  41],
+    [44, "K. KHAN",        "7385",   10,   39, 129, 42, 9,   44, "18.27k", 41, 735, 42],
+    [45, "MALU835",        "6350",   2,    44, 72,  44, 24,  36, "13.18k", 45, 606,  44],
+    [46, "Murphy머피",      "3566",   17,  36,   69, 45, 12,  42, "15.77k", 42, 534,  45],
+    [47, "xDARKNESSx",     "3293",   2,    45, 17,  49, 4,   46, "4166",   49, 126,  49],
+    [48, "Albatcheno",     "2552",   1,    47, 21,  48, 4,   45, "4700",   48, 138,  48],
+    [49, "Slacc05",        "603",    0,    48, 51,  46, 0,   48, "6446",   47, 258,  47],
+    [50, "ValorousDog",    "194",    0,    50, 4,   50, 0,   50, "1075",   50, 27,   50],
+  ]
+};
+
+let currentData = [];
+let sortCol     = 0;
+let sortDir     = 1;
+let sortType    = 'num';
+let selectedRow = null;
+
+// data indices mapped to display col indices
+// display cols: 0=player(1), 1=BM_rank(0), 2=BM_score(2), 3=PD_rank(4), 4=PD_score(3), 5=MD_rank(6), 6=MD_score(5), 7=BP_rank(8), 8=BP_score(7), 9=MOR_rank(10), 10=MOR_score(9), 11=RE_rank(12), 12=RE_score(11)
+const DISPLAY_TO_DATA = [1, 0, 2, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11];
+const COL_TYPES       = ['str','num','score','num','num','num','num','num','num','num','score','num','num'];
+const COL_NAMES       = ['Player','BM Rank','BM Score','PD Rank','PD Score','MD Rank','MD Score','BP Rank','BP Score','Morale Use Rank','Morale Use Score','Red Energy Rank','Red Energy Score'];
+
+function parseScore(v) {
+  if (v === null || v === undefined || v === '') return -Infinity;
+  if (typeof v === 'number') return v;
+  const s = String(v).replace('k','').trim();
+  return parseFloat(s) * (String(v).includes('k') ? 1000 : 1);
+}
+
+function fmt(v) {
+  if (v === null || v === undefined || v === '') return '<span class="empty">—</span>';
+  return v;
+}
+
+function medalClass(rank) {
+  if (rank === 1) return 'gold-text';
+  if (rank === 2) return 'silver-text';
+  if (rank === 3) return 'bronze-text';
+  return '';
+}
+
+function rankBadge(rank) {
+  if (rank === null || rank === undefined) return '<span class="empty">—</span>';
+  const cls = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+  const mc  = medalClass(rank);
+  return `<span class="rank-badge ${cls} ${mc}">${rank}</span>`;
+}
+
+function render(data) {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  selectedRow = null;
+
+  data.forEach((row) => {
+    const [bmRank, player, bmScore,
+           pdScore, pdRank,
+           mdScore, mdRank,
+           bpScore, bpRank,
+           morScore, morRank,
+           reScore, reRank] = row;
+
+    const isPlaceholder = player === 'Placeholder Name';
+    const tr = document.createElement('tr');
+    if (isPlaceholder) tr.classList.add('placeholder');
+
+    tr.innerHTML = `
+      <td class="player-col">${isPlaceholder ? '<span style="color:var(--text3)">Placeholder</span>' : player}</td>
+      <td class="cat-rank-col ${medalClass(bmRank)}">${rankBadge(bmRank)}</td>
+      <td class="bm-col ${medalClass(bmRank)}">${fmt(bmScore)}</td>
+      <td class="cat-border cat-rank-col">${rankBadge(pdRank)}</td>
+      <td class="score-col ${medalClass(pdRank)}">${fmt(pdScore)}</td>
+      <td class="cat-border cat-rank-col">${rankBadge(mdRank)}</td>
+      <td class="score-col ${medalClass(mdRank)}">${fmt(mdScore)}</td>
+      <td class="cat-border cat-rank-col">${rankBadge(bpRank)}</td>
+      <td class="score-col ${medalClass(bpRank)}">${fmt(bpScore)}</td>
+      <td class="cat-border cat-rank-col">${rankBadge(morRank)}</td>
+      <td class="score-col ${medalClass(morRank)}">${fmt(morScore)}</td>
+      <td class="cat-border cat-rank-col">${rankBadge(reRank)}</td>
+      <td class="score-col ${medalClass(reRank)}">${fmt(reScore)}</td>
+    `;
+
+    tr.addEventListener('click', () => {
+      if (selectedRow === tr) {
+        tr.classList.remove('selected');
+        selectedRow = null;
+      } else {
+        if (selectedRow) selectedRow.classList.remove('selected');
+        tr.classList.add('selected');
+        selectedRow = tr;
+      }
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('player-count').textContent = data.filter(r => r[1] !== 'Placeholder Name').length;
+}
+
+function sortTable(displayCol, type) {
+  const dataIdx = DISPLAY_TO_DATA[displayCol];
+
+  if (sortCol === displayCol) {
+    sortDir *= -1;
+  } else {
+    sortCol  = displayCol;
+    sortType = type || COL_TYPES[displayCol];
+    // rank cols default asc (lower = better), score cols default desc
+    sortDir  = (sortType === 'num' && COL_NAMES[displayCol].includes('Rank')) ? 1 : -1;
+  }
+
+  const sorted = [...currentData].sort((a, b) => {
+    let av = a[dataIdx], bv = b[dataIdx];
+    const aNull = av === null || av === undefined;
+    const bNull = bv === null || bv === undefined;
+    if (aNull && bNull) return 0;
+    if (aNull) return 1;
+    if (bNull) return -1;
+    if (sortType === 'str') return sortDir * String(av).localeCompare(String(bv));
+    return sortDir * (parseScore(av) - parseScore(bv));
+  });
+
+  document.querySelectorAll('.col-row th').forEach((th, i) => {
+    th.classList.toggle('sorted', i === displayCol);
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = i === displayCol ? (sortDir === -1 ? '↓' : '↑') : '↕';
+  });
+
+  const dirLabel = sortDir === -1 ? 'high → low' : 'low → high';
+  document.getElementById('sort-label').innerHTML = `Sorted by <span>${COL_NAMES[displayCol]}</span> · ${dirLabel}`;
+
+  render(sorted);
+}
+
+function resetSort() {
+  sortCol = 0; sortDir = 1;
+  document.querySelectorAll('.col-row th').forEach((th, i) => {
+    th.classList.toggle('sorted', i === 1);
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = i === 1 ? '↑' : '↕';
+  });
+  document.getElementById('sort-label').innerHTML = '';
+  render(currentData);
+}
+
+function loadSeason(num) {
+  currentData = seasons[parseInt(num)] || [];
+  resetSort();
+}
+
+loadSeason(25);
+</script>
+</body>
+</html>
