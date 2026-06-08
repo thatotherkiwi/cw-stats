@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Clan Wars Stats</title>
+<title>Clan Wars Stats — Crusaders</title>
 <style>
   :root {
     --bg:        #0e0e0e;
@@ -149,11 +149,16 @@
   .reset-btn:hover { border-color: var(--accent2); color: var(--accent); }
 
   /* TABLE */
-  .table-wrap {
+  .table-outer {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 130px);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--bg2);
+  }
+  .table-wrap {
+    min-width: 900px;
   }
 
   table {
@@ -172,6 +177,7 @@
 
   /* Group row — category names */
   .group-row th {
+    text-align: center;
     padding: 8px 12px 4px;
     font-size: 10px;
     font-weight: 700;
@@ -185,9 +191,11 @@
   .group-row th.group-label {
     color: var(--text2);
     border-left: 1px solid var(--border);
+    text-align: center;
   }
   .group-row th.bm-group {
     color: var(--text2);
+    text-align: center;
   }
 
   /* Col row — sub-headers */
@@ -300,11 +308,11 @@
     margin-top: 2rem;
   }
 
+
   @media (max-width: 700px) {
     header { padding: 0 1rem; height: auto; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; }
     .stats-bar { display: none; }
     main { padding: 1rem 0.75rem; }
-    thead { top: 0; }
     td, .col-row th { padding: 7px 8px; font-size: 12px; }
     td.player-col { font-size: 13px; min-width: 100px; }
   }
@@ -318,6 +326,10 @@
     <div class="stats-bar">
       <div class="stat-pill">Players <strong id="player-count">—</strong></div>
     </div>
+    <select class="season-select" onchange="if(this.value)window.location.href=this.value">
+      <option value="">Crusaders</option>
+      <option value="eagles.html">Eagles</option>
+    </select>
     <select class="season-select" id="season-select" onchange="loadSeason(this.value)">
       <option value="25">Season 25</option>
     </select>
@@ -333,7 +345,7 @@
     </div>
   </div>
 
-  <div class="table-wrap">
+  <div class="table-outer"><div class="table-wrap">
     <table id="leaderboard">
       <thead>
         <tr class="group-row">
@@ -363,10 +375,11 @@
       </thead>
       <tbody id="tbody"></tbody>
     </table>
-  </div>
+    </div></div>
+
 </main>
 
-<footer>Clan Wars Stats · Season data updated manually · Built for the clan</footer>
+<footer>Clan Wars Stats · Crusaders · Season data updated manually</footer>
 
 <script>
 const seasons = {
